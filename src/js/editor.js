@@ -12,12 +12,39 @@ const _undoStack = [];
 const UNDO_LIMIT = 100;
 let _lastInputHistory = null;
 
+let _draftTimer = null;
+const DRAFT_SAVE_DELAY_MS = 800;
+
 function isDirty() { return _dirty; }
+
+/**
+ * Persist the working state to localStorage shortly after editing stops,
+ * so closing the tab does not lose unsaved work.
+ */
+function scheduleDraftSave() {
+  if (_draftTimer) clearTimeout(_draftTimer);
+  _draftTimer = setTimeout(() => {
+    _draftTimer = null;
+    const state = getState();
+    if (state) saveDraft(state);
+  }, DRAFT_SAVE_DELAY_MS);
+}
+
+/** Flush any pending draft write immediately. */
+function flushDraftSave() {
+  if (_draftTimer) {
+    clearTimeout(_draftTimer);
+    _draftTimer = null;
+  }
+  const state = getState();
+  if (state) saveDraft(state);
+}
 
 function markDirty() {
   _dirty = true;
   const btn = document.getElementById("btn-save");
   if (btn) btn.classList.add("toolbar-btn-dirty");
+  scheduleDraftSave();
 }
 
 function clearDirty() {

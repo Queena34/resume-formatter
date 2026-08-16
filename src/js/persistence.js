@@ -21,6 +21,20 @@ function loadInitialState() {
     return embedded;
   }
 
+  // Then the autosaved draft from the previous session, so an accidental
+  // tab close does not discard unsaved edits.
+  try {
+    const lastDocumentId = localStorage.getItem(LAST_DOCUMENT_KEY);
+    if (lastDocumentId) {
+      const draft = loadDraft(lastDocumentId);
+      if (draft && draft.profile && Array.isArray(draft.sections) && draft.sections.length > 0) {
+        return draft;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to restore draft:", e);
+  }
+
   // Otherwise return default state
   return createDefaultState();
 }

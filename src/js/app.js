@@ -38,6 +38,15 @@ document.addEventListener("DOMContentLoaded", () => {
   initJsonImport();
   initMarkdownPaste();
   requestAnimationFrame(() => updateA4Status());
+
+  // Guard against losing unsaved edits, and flush the draft on the way out.
+  window.addEventListener("beforeunload", (e) => {
+    flushDraftSave();
+    if (isDirty()) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
 });
 
 /**
@@ -265,15 +274,59 @@ function handleSave() {
     showToast("请先导入简历。", "warning");
     return;
   }
+  // Three possible save targets, in order of preference:
+  //   1. a writable file on disk (only granted by "导入文件夹")
+  //   2. the snapshot currently being edited (stored in localStorage)
+  //   3. nothing writable — a new copy is the only option
   const sourceFile = getActiveSourceFile();
-  const canOverwrite = Boolean(
+  const canOverwriteSource = Boolean(
     sourceFile && sourceFile.parentDirectory && sourceFile.handle
     && typeof sourceFile.handle.createWritable === "function"
   );
-  const currentName = sourceFile?.name || state.source?.fileName || "当前未关联源文件";
-  const overwriteMessage = canOverwrite
-    ? `当前文件：${currentName}\n请选择新建副本，或将修改写回当前源文件。`
-    : `当前文件：${currentName}\n当前版本没有可写的源文件，只能新建副本。`;
+  const snapshot = canOverwriteSource ? null : getActiveSnapshot();
+
+  let currentName;
+  let overwriteMessage;
+  let overwriteButton;
+
+  if (canOverwriteSource) {
+    currentName = sourceFile.name;
+    overwriteMessage = `当前文件：${currentName}\n请选择新建副本，或将修改写回当前源文件。`;
+    overwriteButton = {
+      text: "覆盖源文件",
+      primary: true,
+      title: `覆盖 ${currentName}`,
+      action: () => confirmOverwriteSource(sourceFile),
+    };
+  } else if (snapshot) {
+    currentName = snapshot.name;
+    overwriteMessage = `当前副本：${currentName}\n请选择覆盖当前副本，或另存为新副本。`;
+    overwriteButton = {
+      text: "覆盖当前副本",
+      primary: true,
+      title: `覆盖 ${currentName}`,
+      action: () => {
+        if (overwriteMarkdownSnapshot(snapshot.id, state)) {
+          clearDirty();
+          showToast(`已更新副本“${snapshot.name}”。`, "success");
+        } else {
+          showToast("该副本已不存在，请改用新建副本。", "error");
+        }
+      },
+    };
+  } else {
+    currentName = state.source?.fileName || "当前未关联源文件";
+    overwriteMessage =
+      `当前文件：${currentName}\n当前版本没有可写的源文件，只能新建副本。\n` +
+      `提示：通过“导入文件夹”打开的简历可以直接写回原文件。`;
+    overwriteButton = {
+      text: "覆盖源文件",
+      primary: false,
+      disabled: true,
+      title: "当前版本没有可写的源文件",
+      action: () => {},
+    };
+  }
 
   showDialog({
     title: "保存简历",
@@ -281,13 +334,7 @@ function handleSave() {
     buttons: [
       { text: "取消" },
       { text: "新建副本", action: () => promptSaveCopy(state) },
-      {
-        text: "覆盖源文件",
-        primary: canOverwrite,
-        disabled: !canOverwrite,
-        title: canOverwrite ? `覆盖 ${currentName}` : "当前版本没有可写的源文件",
-        action: () => confirmOverwriteSource(sourceFile),
-      },
+      overwriteButton,
     ],
   });
 }
@@ -629,6 +676,33 @@ function saveMarkdownSnapshot(state, customName) {
   snapshots.unshift(snapshot);
   localStorage.setItem(MD_SNAPSHOTS_KEY, JSON.stringify(snapshots));
   _activeFile = `snapshot:${snapshot.id}`;
+  renderResumeFileList(_directoryFiles, _directoryName, _directoryCanRefresh);
+  return snapshot;
+}
+
+/**
+ * Return the snapshot record currently being edited, if any.
+ * @returns {object|null}
+ */
+function getActiveSnapshot() {
+  if (!_activeFile || !_activeFile.startsWith("snapshot:")) return null;
+  const snapshotId = _activeFile.slice("snapshot:".length);
+  return loadMarkdownSnapshots().find((item) => item.id === snapshotId) || null;
+}
+
+/**
+ * Write the current state back into an existing snapshot, in place.
+ * @param {string} snapshotId
+ * @param {object} state
+ * @returns {object|null} the updated snapshot, or null if it no longer exists
+ */
+function overwriteMarkdownSnapshot(snapshotId, state) {
+  const snapshots = loadMarkdownSnapshots();
+  const snapshot = snapshots.find((item) => item.id === snapshotId);
+  if (!snapshot) return null;
+  snapshot.markdown = serializeStateToMarkdown(state);
+  snapshot.updatedAt = new Date().toISOString();
+  localStorage.setItem(MD_SNAPSHOTS_KEY, JSON.stringify(snapshots));
   renderResumeFileList(_directoryFiles, _directoryName, _directoryCanRefresh);
   return snapshot;
 }

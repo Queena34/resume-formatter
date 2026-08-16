@@ -1018,6 +1018,13 @@ function syncElementToState(el) {
     return;
   }
 
+  // Section title
+  if (el.dataset.sectionTitle) {
+    const section = state.sections.find((s) => s.id === el.dataset.sectionTitle);
+    if (section) section.title = raw;
+    return;
+  }
+
   // Entry field
   if (el.dataset.entryField) {
     const field = el.dataset.entryField;

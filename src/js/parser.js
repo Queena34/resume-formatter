@@ -211,6 +211,23 @@ function parseSections(lines, startLine, errors) {
       continue;
     }
 
+    // title: — a custom display name for the section heading.
+    // Checked before the entry fields below so that it always binds to the
+    // section, including in `skills` where a synthetic entry already exists.
+    if (trimmed.startsWith("title:")) {
+      if (!currentSection) {
+        errors.push({
+          level: "warning",
+          code: "TITLE_OUTSIDE_SECTION",
+          message: `字段 "title" 不在任何栏目内。`,
+          line: i + 1,
+        });
+        continue;
+      }
+      currentSection.title = trimmed.slice("title:".length).trim();
+      continue;
+    }
+
     // role: / date: / location: fields
     if (trimmed.startsWith("role:") || trimmed.startsWith("date:") || trimmed.startsWith("location:")) {
       if (!currentEntry) {

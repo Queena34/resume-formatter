@@ -709,7 +709,8 @@
    never renders the hint. */
 #resume-page[data-theme] .entry-name[contenteditable]:empty::before,
 #resume-page[data-theme] .entry-role[contenteditable]:empty::before,
-#resume-page[data-theme] .entry-date[contenteditable]:empty::before {
+#resume-page[data-theme] .entry-date[contenteditable]:empty::before,
+#resume-page[data-theme] .section-title[contenteditable]:empty::before {
   content: attr(data-placeholder);
   color: #b8b8b8;
   font-weight: 400;
@@ -719,7 +720,8 @@
 
 #resume-page[data-theme] .entry-name[contenteditable]:empty:focus::before,
 #resume-page[data-theme] .entry-role[contenteditable]:empty:focus::before,
-#resume-page[data-theme] .entry-date[contenteditable]:empty:focus::before {
+#resume-page[data-theme] .entry-date[contenteditable]:empty:focus::before,
+#resume-page[data-theme] .section-title[contenteditable]:empty:focus::before {
   content: "";
   border-bottom: none;
 }
@@ -727,7 +729,8 @@
 /* Guarantee a click target even while focused and empty. */
 #resume-page[data-theme] .entry-name[contenteditable]:empty,
 #resume-page[data-theme] .entry-role[contenteditable]:empty,
-#resume-page[data-theme] .entry-date[contenteditable]:empty {
+#resume-page[data-theme] .entry-date[contenteditable]:empty,
+#resume-page[data-theme] .section-title[contenteditable]:empty {
   display: inline-block;
   min-width: 8mm;
 }

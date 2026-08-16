@@ -38,7 +38,14 @@ function serializeStateToMarkdown(state) {
   };
 
   (state.sections || []).forEach((section) => {
-    lines.push(`## ${sectionTitles[section.type] || cleanScalar(section.title) || section.type}`, "");
+    // Keep the heading canonical so re-import still resolves the section type,
+    // and carry any user-renamed heading in a `title:` line beneath it.
+    const canonicalTitle = sectionTitles[section.type];
+    const customTitle = cleanScalar(section.title);
+    lines.push(`## ${canonicalTitle || customTitle || section.type}`, "");
+    if (canonicalTitle && customTitle && customTitle !== canonicalTitle) {
+      lines.push(`title: ${customTitle}`, "");
+    }
     (section.entries || []).forEach((entry) => {
       if (section.type !== "skills") {
         lines.push(`### ${cleanScalar(entry.name)}`);

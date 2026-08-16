@@ -55,14 +55,16 @@
   /* Editing-only empty-state hints must never reach the PDF. */
   #resume-page[data-theme] .entry-name[contenteditable]:empty::before,
   #resume-page[data-theme] .entry-role[contenteditable]:empty::before,
-  #resume-page[data-theme] .entry-date[contenteditable]:empty::before {
+  #resume-page[data-theme] .entry-date[contenteditable]:empty::before,
+  #resume-page[data-theme] .section-title[contenteditable]:empty::before {
     content: "" !important;
     border-bottom: none !important;
   }
 
   #resume-page[data-theme] .entry-name[contenteditable]:empty,
   #resume-page[data-theme] .entry-role[contenteditable]:empty,
-  #resume-page[data-theme] .entry-date[contenteditable]:empty {
+  #resume-page[data-theme] .entry-date[contenteditable]:empty,
+#resume-page[data-theme] .section-title[contenteditable]:empty {
     min-width: 0 !important;
   }
 

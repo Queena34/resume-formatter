@@ -1655,7 +1655,8 @@ body {
    never renders the hint. */
 #resume-page[data-theme] .entry-name[contenteditable]:empty::before,
 #resume-page[data-theme] .entry-role[contenteditable]:empty::before,
-#resume-page[data-theme] .entry-date[contenteditable]:empty::before {
+#resume-page[data-theme] .entry-date[contenteditable]:empty::before,
+#resume-page[data-theme] .section-title[contenteditable]:empty::before {
   content: attr(data-placeholder);
   color: #b8b8b8;
   font-weight: 400;
@@ -1665,7 +1666,8 @@ body {
 
 #resume-page[data-theme] .entry-name[contenteditable]:empty:focus::before,
 #resume-page[data-theme] .entry-role[contenteditable]:empty:focus::before,
-#resume-page[data-theme] .entry-date[contenteditable]:empty:focus::before {
+#resume-page[data-theme] .entry-date[contenteditable]:empty:focus::before,
+#resume-page[data-theme] .section-title[contenteditable]:empty:focus::before {
   content: "";
   border-bottom: none;
 }
@@ -1673,7 +1675,8 @@ body {
 /* Guarantee a click target even while focused and empty. */
 #resume-page[data-theme] .entry-name[contenteditable]:empty,
 #resume-page[data-theme] .entry-role[contenteditable]:empty,
-#resume-page[data-theme] .entry-date[contenteditable]:empty {
+#resume-page[data-theme] .entry-date[contenteditable]:empty,
+#resume-page[data-theme] .section-title[contenteditable]:empty {
   display: inline-block;
   min-width: 8mm;
 }
@@ -1946,14 +1949,16 @@ body {
   /* Editing-only empty-state hints must never reach the PDF. */
   #resume-page[data-theme] .entry-name[contenteditable]:empty::before,
   #resume-page[data-theme] .entry-role[contenteditable]:empty::before,
-  #resume-page[data-theme] .entry-date[contenteditable]:empty::before {
+  #resume-page[data-theme] .entry-date[contenteditable]:empty::before,
+  #resume-page[data-theme] .section-title[contenteditable]:empty::before {
     content: "" !important;
     border-bottom: none !important;
   }
 
   #resume-page[data-theme] .entry-name[contenteditable]:empty,
   #resume-page[data-theme] .entry-role[contenteditable]:empty,
-  #resume-page[data-theme] .entry-date[contenteditable]:empty {
+  #resume-page[data-theme] .entry-date[contenteditable]:empty,
+#resume-page[data-theme] .section-title[contenteditable]:empty {
     min-width: 0 !important;
   }
 
@@ -2727,6 +2732,23 @@ function parseSections(lines, startLine, errors) {
       currentEntry = { name, role: "", date: "", location: "", bullets: [], line: i + 1 };
       currentSection.entries.push(currentEntry);
       currentBullets = currentEntry.bullets;
+      continue;
+    }
+
+    // title: — a custom display name for the section heading.
+    // Checked before the entry fields below so that it always binds to the
+    // section, including in `skills` where a synthetic entry already exists.
+    if (trimmed.startsWith("title:")) {
+      if (!currentSection) {
+        errors.push({
+          level: "warning",
+          code: "TITLE_OUTSIDE_SECTION",
+          message: `字段 "title" 不在任何栏目内。`,
+          line: i + 1,
+        });
+        continue;
+      }
+      currentSection.title = trimmed.slice("title:".length).trim();
       continue;
     }
 
@@ -3847,7 +3869,7 @@ function buildStateFromJson(data, fileName) {
   state.sections = (data.sections || []).map((section) => ({
     id: generateId(),
     type: section.type,
-    title: getSectionTitle(section.type),
+    title: section.title || getSectionTitle(section.type),
     entries: (section.entries || []).map((entry) => ({
       id: generateId(),
       name: entry.name || "",
@@ -4094,7 +4116,7 @@ function buildState(frontmatter, sections, fileName) {
   state.sections = sections.map((section) => ({
     id: generateId(),
     type: section.type,
-    title: getSectionTitle(section.type),
+    title: section.title || getSectionTitle(section.type),
     entries: (section.entries || []).map((entry) => ({
       id: generateId(),
       name: entry.name || "",
@@ -4284,6 +4306,9 @@ function renderSection(section) {
   const titleEl = document.createElement("h2");
   titleEl.className = "section-title";
   titleEl.textContent = section.title;
+  titleEl.contentEditable = "plaintext-only";
+  titleEl.dataset.sectionTitle = section.id;
+  titleEl.dataset.placeholder = "栏目名称";
   sectionEl.appendChild(titleEl);
 
   const divider = document.createElement("div");
@@ -5651,6 +5676,13 @@ function syncElementToState(el) {
     return;
   }
 
+  // Section title
+  if (el.dataset.sectionTitle) {
+    const section = state.sections.find((s) => s.id === el.dataset.sectionTitle);
+    if (section) section.title = raw;
+    return;
+  }
+
   // Entry field
   if (el.dataset.entryField) {
     const field = el.dataset.entryField;
@@ -5962,7 +5994,14 @@ function serializeStateToMarkdown(state) {
   };
 
   (state.sections || []).forEach((section) => {
-    lines.push(`## ${sectionTitles[section.type] || cleanScalar(section.title) || section.type}`, "");
+    // Keep the heading canonical so re-import still resolves the section type,
+    // and carry any user-renamed heading in a `title:` line beneath it.
+    const canonicalTitle = sectionTitles[section.type];
+    const customTitle = cleanScalar(section.title);
+    lines.push(`## ${canonicalTitle || customTitle || section.type}`, "");
+    if (canonicalTitle && customTitle && customTitle !== canonicalTitle) {
+      lines.push(`title: ${customTitle}`, "");
+    }
     (section.entries || []).forEach((entry) => {
       if (section.type !== "skills") {
         lines.push(`### ${cleanScalar(entry.name)}`);

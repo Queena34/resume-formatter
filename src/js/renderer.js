@@ -167,6 +167,9 @@ function renderSection(section) {
   const titleEl = document.createElement("h2");
   titleEl.className = "section-title";
   titleEl.textContent = section.title;
+  titleEl.contentEditable = "plaintext-only";
+  titleEl.dataset.sectionTitle = section.id;
+  titleEl.dataset.placeholder = "栏目名称";
   sectionEl.appendChild(titleEl);
 
   const divider = document.createElement("div");

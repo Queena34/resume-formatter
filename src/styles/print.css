@@ -56,7 +56,8 @@
   #resume-page[data-theme] .entry-name[contenteditable]:empty::before,
   #resume-page[data-theme] .entry-role[contenteditable]:empty::before,
   #resume-page[data-theme] .entry-date[contenteditable]:empty::before,
-  #resume-page[data-theme] .section-title[contenteditable]:empty::before {
+  #resume-page[data-theme] .section-title[contenteditable]:empty::before,
+  #resume-page[data-theme] [data-section-type="summary"] .bullet-item[contenteditable]:empty::before {
     content: "" !important;
     border-bottom: none !important;
   }

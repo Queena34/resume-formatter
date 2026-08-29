@@ -5,7 +5,7 @@
  */
 
 /** @type {string[]} */
-const ALLOWED_SECTION_TYPES = ["education", "experience", "projects", "skills"];
+const ALLOWED_SECTION_TYPES = ["summary", "education", "experience", "projects", "skills"];
 
 /**
  * Strip code fences (```json ... ```) from raw input.
@@ -784,7 +784,7 @@ function importJsonResume(rawJson, fileName) {
         }
 
         // Non-skills entries need name
-        if (section.type !== "skills" && (!entry.name || typeof entry.name !== "string")) {
+        if (!SECTIONS_WITHOUT_ENTRIES.includes(section.type) && (!entry.name || typeof entry.name !== "string")) {
           errors.push({
             level: "error",
             code: "MISSING_ENTRY_NAME",

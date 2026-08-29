@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initResumeListPanel();
   initJsonImport();
   initMarkdownPaste();
+  updateSummaryButton();
   requestAnimationFrame(() => updateA4Status());
 
   // Guard against losing unsaved edits, and flush the draft on the way out.
@@ -113,6 +114,9 @@ function wireToolbar() {
   }
   const btnSave = document.getElementById("btn-save");
   if (btnSave) btnSave.addEventListener("click", () => handleSave());
+
+  const btnSummary = document.getElementById("btn-toggle-summary");
+  if (btnSummary) btnSummary.addEventListener("click", handleToggleSummary);
 
   // Export PDF
   if (btnExportPdf) {
@@ -264,6 +268,81 @@ date: 2024.01–2024.03
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   showToast("已下载模板，用文本编辑器填写后导入即可。", "success");
+}
+
+/**
+ * Reflect whether the resume currently has a summary section in the button.
+ */
+function updateSummaryButton() {
+  const btn = document.getElementById("btn-toggle-summary");
+  if (!btn) return;
+  const state = getState();
+  const has = !!(state && (state.sections || []).some((s) => s.type === "summary"));
+  const label = btn.querySelector(".btn-label");
+  if (label) label.textContent = has ? "删除个人描述" : "+ 个人描述";
+  btn.title = has ? "删除个人描述栏目" : "在最顶部添加个人描述";
+}
+
+/** Add the summary section at the top, or remove it. */
+function handleToggleSummary() {
+  const state = getState();
+  if (!state) return;
+
+  const index = (state.sections || []).findIndex((s) => s.type === "summary");
+
+  if (index === -1) {
+    pushUndoState();
+    state.sections.unshift({
+      id: generateId(),
+      type: "summary",
+      title: getSectionTitle("summary"),
+      entries: [{
+        id: generateId(),
+        name: "",
+        role: "",
+        date: "",
+        location: "",
+        bullets: [{ id: generateId(), content: [{ type: "text", value: "" }] }],
+      }],
+    });
+    renderResume(state);
+    markDirty();
+    updateSummaryButton();
+    updateA4Status();
+    // Put the caret straight into the new line
+    const item = document.querySelector('[data-section-type="summary"] .bullet-item');
+    if (item) item.focus();
+    return;
+  }
+
+  const section = state.sections[index];
+  const hasContent = (section.entries || []).some((entry) =>
+    (entry.bullets || []).some((b) => (b.content || []).some((c) => (c.value || "").trim()))
+  );
+
+  const remove = () => {
+    pushUndoState();
+    state.sections.splice(index, 1);
+    renderResume(state);
+    markDirty();
+    updateSummaryButton();
+    updateA4Status();
+    showToast("已删除个人描述。", "success");
+  };
+
+  if (!hasContent) {
+    remove();
+    return;
+  }
+
+  showDialog({
+    title: "删除个人描述",
+    message: "该栏目中已有内容，删除后将一并移除。",
+    buttons: [
+      { text: "取消" },
+      { text: "删除", action: remove },
+    ],
+  });
 }
 
 /** Choose whether to create a copy or overwrite the active source file. */

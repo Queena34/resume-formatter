@@ -90,7 +90,7 @@ function validateAndBuildState(parseResult, fileName) {
 
     for (const entry of (section.entries || [])) {
       // Validate entry fields
-      if (section.type !== "skills" && !entry.name) {
+      if (!SECTIONS_WITHOUT_ENTRIES.includes(section.type) && !entry.name) {
         errors.push({
           level: "error",
           code: "MISSING_ENTRY_NAME",

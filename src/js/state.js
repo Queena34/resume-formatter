@@ -17,11 +17,26 @@ const SCHEMA_VERSION_1 = 1;
 
 /** @type {string} */
 const SECTION_TITLES = {
+  summary: "个人描述",
   education: "教育背景",
   experience: "实习经历",
   projects: "项目经历",
   skills: "技能特长",
 };
+
+/**
+ * Sections that hold free-standing bullets instead of `###` entries.
+ * They share one synthetic entry and skip the entry header entirely.
+ * @type {string[]}
+ */
+const SECTIONS_WITHOUT_ENTRIES = ["skills", "summary"];
+
+/**
+ * Sections rendered without a visible heading or divider.
+ * The Markdown heading still delimits them in the file.
+ * @type {string[]}
+ */
+const SECTIONS_WITHOUT_HEADING = ["summary"];
 
 /**
  * Object.frozen mapping from PRD section keys to display titles.

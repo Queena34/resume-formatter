@@ -944,3 +944,31 @@
    Print — shared
    ======================== */
 @media print { #resume-page { box-shadow: none; } }
+
+/* ========================
+   Summary section (个人描述)
+   Bare paragraph text: no heading, no divider, no bullet marker.
+   ======================== */
+#resume-page[data-theme] [data-section-type="summary"] .skills-list .bullet-item {
+  padding-left: 0;
+  text-align: justify;
+}
+#resume-page[data-theme] [data-section-type="summary"] .skills-list .bullet-item::before {
+  content: none;
+}
+
+/* Placeholder for an empty summary line, so the field stays visible and clickable. */
+#resume-page[data-theme] [data-section-type="summary"] .bullet-item[contenteditable]:empty::before {
+  content: "个人描述";
+  color: #b8b8b8;
+  border-bottom: 1px dashed #d5d5d5;
+  cursor: text;
+}
+#resume-page[data-theme] [data-section-type="summary"] .bullet-item[contenteditable]:empty:focus::before {
+  content: "";
+  border-bottom: none;
+}
+#resume-page[data-theme] [data-section-type="summary"] .bullet-item[contenteditable]:empty {
+  display: inline-block;
+  min-width: 20mm;
+}

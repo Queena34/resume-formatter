@@ -994,7 +994,7 @@ function syncElementToState(el) {
   // Chrome leaves a stray <br> behind when a contenteditable field is cleared,
   // which defeats the :empty placeholder rule. Normalise it away so an emptied
   // field stays clickable.
-  if (!raw && el.dataset.placeholder && el.innerHTML !== "") {
+  if (!raw && el.isContentEditable && el.innerHTML !== "") {
     el.innerHTML = "";
   }
 

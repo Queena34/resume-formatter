@@ -5,10 +5,12 @@
  */
 
 /** @type {string[]} */
-const SUPPORTED_SECTIONS = ["education", "experience", "projects", "skills"];
+const SUPPORTED_SECTIONS = ["summary", "education", "experience", "projects", "skills"];
 
 /** @type {Record<string, string>} */
 const SECTION_ALIASES = {
+  "个人描述": "summary",
+  "个人简介": "summary",
   "教育经历": "education",
   "实习经历": "experience",
   "项目经历": "projects",
@@ -173,8 +175,8 @@ function parseSections(lines, startLine, errors) {
         currentBullets = null;
         sections.push(currentSection);
 
-        // skills has no ### entries — use one synthetic entry
-        if (name === "skills") {
+        // skills / summary have no ### entries — use one synthetic entry
+        if (SECTIONS_WITHOUT_ENTRIES.includes(name)) {
           currentEntry = { name: "", role: "", date: "", location: "", bullets: [], line: i + 1 };
           currentSection.entries.push(currentEntry);
           currentBullets = currentEntry.bullets;
@@ -194,13 +196,13 @@ function parseSections(lines, startLine, errors) {
         });
         continue;
       }
-      if (currentSection.type === "skills") {
+      if (SECTIONS_WITHOUT_ENTRIES.includes(currentSection.type)) {
         errors.push({
           level: "warning",
           code: "ENTRY_IN_SKILLS",
-          message: "skills 栏目不支持子条目（###）。",
+          message: `${currentSection.type} 栏目不支持子条目（###）。`,
           line: i + 1,
-          suggestion: "skills 栏目请直接使用 - bullet。",
+          suggestion: `${currentSection.type} 栏目请直接使用 - bullet。`,
         });
         continue;
       }

@@ -13,6 +13,7 @@ function renderResume(state) {
   if (typeof applyLayoutState === "function") applyLayoutState(state);
   if (typeof applyLocalFormatting === "function") applyLocalFormatting(state);
   if (typeof applyHeaderPosition === "function") applyHeaderPosition(state);
+  if (typeof updateSummaryButton === "function") updateSummaryButton();
   updateStatusInfo(state);
 }
 
@@ -164,20 +165,24 @@ function renderSection(section) {
   dragHandle.setAttribute("aria-valuetext", `${sectionSpacingMm.toFixed(1)} 毫米`);
   sectionEl.appendChild(dragHandle);
 
-  const titleEl = document.createElement("h2");
-  titleEl.className = "section-title";
-  titleEl.textContent = section.title;
-  titleEl.contentEditable = "plaintext-only";
-  titleEl.dataset.sectionTitle = section.id;
-  titleEl.dataset.placeholder = "栏目名称";
-  sectionEl.appendChild(titleEl);
+  // Summary renders as bare text: no heading, no divider. The Markdown
+  // heading still delimits it in the file.
+  if (!SECTIONS_WITHOUT_HEADING.includes(section.type)) {
+    const titleEl = document.createElement("h2");
+    titleEl.className = "section-title";
+    titleEl.textContent = section.title;
+    titleEl.contentEditable = "plaintext-only";
+    titleEl.dataset.sectionTitle = section.id;
+    titleEl.dataset.placeholder = "栏目名称";
+    sectionEl.appendChild(titleEl);
 
-  const divider = document.createElement("div");
-  divider.className = "section-divider";
-  sectionEl.appendChild(divider);
+    const divider = document.createElement("div");
+    divider.className = "section-divider";
+    sectionEl.appendChild(divider);
+  }
 
-  // Skills: bullets directly, no entry header, no inline add
-  if (section.type === "skills") {
+  // Skills / summary: bullets directly, no entry header, no inline add
+  if (SECTIONS_WITHOUT_ENTRIES.includes(section.type)) {
     const entry = section.entries[0];
     if (entry) {
       const list = document.createElement("ul");
@@ -287,6 +292,8 @@ function renderBulletRow(bullet) {
     span.dataset.bulletMarker = bullet.markerStyle;
   }
   span.appendChild(renderInlineContent(bullet.content));
+  // An empty text node would defeat the :empty placeholder rule.
+  if (span.textContent === "") span.innerHTML = "";
   li.appendChild(span);
 
   const delBtn = document.createElement("button");
@@ -447,7 +454,7 @@ function updateAddGutter(state) {
     const sectionEl = document.querySelector(`section[data-section-id="${section.id}"]`);
     if (!sectionEl) return;
 
-    if (section.type === "skills") {
+    if (SECTIONS_WITHOUT_ENTRIES.includes(section.type)) {
       // Skills: bullet add at bottom of list
       const listEl = sectionEl.querySelector(".skills-list");
       if (listEl) {

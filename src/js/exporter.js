@@ -31,6 +31,7 @@ function serializeStateToMarkdown(state) {
   lines.push("---", "");
 
   const sectionTitles = {
+    summary: "个人描述",
     education: "教育经历",
     experience: "实习经历",
     projects: "项目经历",
@@ -47,7 +48,7 @@ function serializeStateToMarkdown(state) {
       lines.push(`title: ${customTitle}`, "");
     }
     (section.entries || []).forEach((entry) => {
-      if (section.type !== "skills") {
+      if (!SECTIONS_WITHOUT_ENTRIES.includes(section.type)) {
         lines.push(`### ${cleanScalar(entry.name)}`);
         if (entry.role) lines.push(`role: ${cleanScalar(entry.role)}`);
         if (entry.date) lines.push(`date: ${cleanScalar(entry.date)}`);

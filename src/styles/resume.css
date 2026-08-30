@@ -660,7 +660,8 @@
 
 #resume-page[data-theme] .section-title {
   font-size: var(--font-size-section-title);
-  margin: 0 0 0.35mm;
+  /* Breathing room between the section rule and its first line. */
+  margin: 0 0 0.9mm;
   padding: 0 0 0.2mm;
   letter-spacing: 0;
 }

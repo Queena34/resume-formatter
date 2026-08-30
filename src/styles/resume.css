@@ -690,6 +690,22 @@
   margin-bottom: 0.05mm;
 }
 
+/* Projects share the experience layout, so keep their spacing identical —
+   without these the section falls back to the 1.4 body line-height and leaves
+   a visibly larger gap under the section rule. */
+#resume-page[data-theme] .resume-section[data-section-type="projects"] .resume-entry {
+  margin-bottom: 1.1mm;
+}
+
+#resume-page[data-theme] .resume-section[data-section-type="projects"] .resume-entry:last-child {
+  margin-bottom: 0;
+}
+
+#resume-page[data-theme] .resume-section[data-section-type="projects"] .entry-header {
+  line-height: 1.25;
+  margin-bottom: 0.05mm;
+}
+
 #resume-page[data-theme] .entry-left { display: contents; }
 
 #resume-page[data-theme] .entry-name,
